@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Copyright (c) 2020 FEROX YT EIRL, www.ferox.yt <devops@ferox.yt>
+# Copyright (c) 2020 Jérémy WALTHER <jeremy.walther@golflima.net>
+# See <https://github.com/frxyt/docker-dns-local> for details.
+
+set -ex
+
+# Install required packages
+apk add --no-cache \
+    bash \
+    nsd \
+    perl \
+    supervisor \
+    unbound
+
+# Create folders
+mkdir -p /etc/nsd/conf.d
+mkdir -p /etc/supervisord.conf.d
+mkdir -p /etc/unbound/conf.d
+mkdir -p /frx/version
+mkdir -p /run/nsd
+mkdir -p /usr/local/bin/frx-runasync.d
+mkdir -p /usr/local/bin/frx-start.d
+mkdir -p /var/log/supervisor
+
+# Move scripts
+mv -f /frx/log                      /usr/local/bin/frx-log
+mv -f /frx/runasync                 /usr/local/bin/frx-runasync
+mv -f /frx/start                    /usr/local/bin/frx-start
+mv -f /frx/tz                       /usr/local/bin/frx-tz
+
+# Move configuration files
+rm /etc/nsd/nsd.conf.sample
+mv -f /frx/conf/nsd.conf            /etc/nsd/nsd.conf
+mv -f /frx/conf/supervisord.conf    /etc/supervisord.conf
+mv -f /frx/conf/unbound.conf        /etc/unbound/unbound.conf
+
+# Save tools versions
+/usr/sbin/nsd -v 2>&1 | grep version | cut -d' ' -f3 > /frx/version/nsd
+/usr/sbin/unbound -V | grep Version | cut -d' ' -f2 > /frx/version/unbound
+
+# Display versions
+cat /etc/alpine-release
+/usr/sbin/nsd -v
+/usr/sbin/unbound -V
